@@ -441,13 +441,13 @@ function Hero({ lang }) {
           {/* floating card — desktop only */}
           {!isMobile && (
             <div style={{
-              position: 'absolute', left: 0, top: '52%',
-              width: 340, background: B.white, borderRadius: B.rLg,
+              marginTop: 36, width: 340,
+              background: B.white, borderRadius: B.rLg,
               padding: '22px 24px 24px',
               display: 'flex', flexDirection: 'column', gap: 14,
               transform: 'rotate(-1.5deg)',
               boxShadow: '0 24px 50px -20px rgba(10,31,77,0.22), 0 4px 12px -6px rgba(10,31,77,0.1)',
-              border: '1px solid rgba(10,31,77,0.06)', zIndex: 2,
+              border: '1px solid rgba(10,31,77,0.06)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: B.font, fontSize: 10, fontWeight: 600, color: B.ash, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                 <span>{lang === 'es' ? 'Sobre nosotros' : 'About us'}</span>
