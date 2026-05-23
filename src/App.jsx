@@ -168,10 +168,33 @@ const B = {
   white:     '#ffffff',
   ink:       '#0a1f4d',
   ash:       '#5e6b87',
-  whiteSoft: 'rgba(255,255,255,0.78)',
+  whiteSoft: 'rgba(255,255,255,0.86)',
   font:      '"Poppins", "Helvetica Neue", system-ui, sans-serif',
   mono:      '"JetBrains Mono", ui-monospace, monospace',
   rLg: 28, rMd: 18, rSm: 12,
+};
+
+const SP = {
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+  xxxl: 56,
+  jumbo: 72,
+};
+
+const TYPE = {
+  labelXs: { fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' },
+  labelXsWide: { fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' },
+  labelSm: { fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' },
+  labelSmWide: { fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' },
+  labelMd: { fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' },
+  bodyXs:  { fontSize: 13, lineHeight: 1.55, textAlign: 'left' },
+  bodySm:  { fontSize: 14, lineHeight: 1.55, textAlign: 'left' },
+  bodyMd:  { fontSize: 15, lineHeight: 1.6,  textAlign: 'left' },
+  bodyLg:  { fontSize: 16, lineHeight: 1.65, textAlign: 'left' },
 };
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
@@ -181,16 +204,19 @@ function Wrap({ children, style = {} }) {
   return <div style={{ maxWidth: 1240, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px', ...style }}>{children}</div>;
 }
 
-function Btn({ children, variant = 'mustard', size = 'md', style = {}, ...props }) {
+function Btn({ children, variant = 'mustard', size = 'md', type = 'button', style = {}, ...props }) {
   const v = {
     mustard: { bg: B.mustard,     fg: B.white, hover: B.navySoft },
     navy:    { bg: B.navy,        fg: B.white, hover: B.navySoft },
     ghost:   { bg: 'transparent', fg: B.white, hover: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.35)' },
   }[variant];
-  const sz = size === 'lg' ? { padding: '18px 38px', fontSize: 13 } : { padding: '13px 24px', fontSize: 12 };
+  const sz = size === 'lg'
+    ? { padding: '18px 38px', fontSize: 13, minHeight: 50 }
+    : { padding: '13px 24px', fontSize: 12, minHeight: 44 };
   const [hov, setHov] = useState(false);
   return (
     <button
+      type={type}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -299,17 +325,27 @@ function PhotoBlock({ label, tone = 'warm', ratio = '4/5', radius = B.rLg, style
   );
 }
 
-function Marquee({ items, speed = 50, inverted = false }) {
+function Marquee({ items, speed = 50, inverted = false, ariaLabel }) {
   const doubled = [...items, ...items];
+  const srOnly = {
+    position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
+    overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
+  };
   return (
     <div style={{
       overflow: 'hidden',
+      position: 'relative',
       background: inverted ? B.navy : B.white,
       borderTop: '1px solid rgba(10,31,77,0.08)',
       borderBottom: '1px solid rgba(10,31,77,0.08)',
       padding: '22px 0',
-    }}>
-      <div style={{
+    }} aria-label={ariaLabel}>
+      <div style={srOnly} role="list">
+        {items.map((it, i) => (
+          <span key={i} role="listitem">{it}</span>
+        ))}
+      </div>
+      <div aria-hidden="true" style={{
         display: 'flex', gap: 48, whiteSpace: 'nowrap',
         animation: `brand-marquee ${speed}s linear infinite`,
         width: 'max-content',
@@ -341,9 +377,14 @@ function Nav({ lang, setLang }) {
   const LangToggle = ({ compact }) => (
     <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: compact ? B.white : B.cream, border: compact ? '1px solid rgba(10,31,77,0.10)' : 'none' }}>
       {['es','en'].map(l => (
-        <button key={l} onClick={() => setLang(l)} style={{
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          aria-label={l === 'es' ? 'Cambiar idioma a Español' : 'Switch language to English'}
+          style={{
           appearance: 'none', border: 0, cursor: 'pointer',
-          padding: '5px 10px', borderRadius: 999,
+          padding: compact ? '8px 12px' : '6px 10px', minHeight: compact ? 44 : 36, borderRadius: 999,
           fontFamily: B.font, fontWeight: 600, fontSize: 11, letterSpacing: '0.06em',
           background: lang === l ? B.navy : 'transparent',
           color: lang === l ? B.mustard : B.ink,
@@ -354,7 +395,7 @@ function Nav({ lang, setLang }) {
   );
 
   return (
-    <nav style={{
+    <nav aria-label={lang === 'es' ? 'Navegación principal' : 'Primary navigation'} style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
       padding: isMobile ? '12px 20px' : '16px 48px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -364,7 +405,7 @@ function Nav({ lang, setLang }) {
       borderBottom: scrolled ? '1px solid rgba(10,31,77,0.08)' : 'none',
       transition: 'background .3s, border-color .3s',
     }}>
-      <img src="/assets/logo-risk-consulting.png" alt="Risk Consulting Seguros" style={{ height: isMobile ? 32 : 40, width: 'auto' }} />
+      <img src="/assets/logo-risk-consulting.png" alt="Risk Consulting Seguros" decoding="async" style={{ height: isMobile ? 32 : 40, width: 'auto' }} />
 
       {isMobile ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -427,46 +468,100 @@ function Hero({ lang }) {
         </div>
 
         {/* headline */}
-        <div style={{ position: 'relative', paddingTop: 52, paddingBottom: isMobile ? 40 : 52 }}>
-          <h1 style={{
-            fontFamily: B.font, fontWeight: 700,
-            fontSize: 'clamp(52px, 12vw, 192px)',
-            letterSpacing: '-0.05em', lineHeight: 0.88,
-            color: B.navy, margin: 0,
+        {isMobile ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            paddingTop: 44,
+            paddingBottom: 34,
           }}>
-            <span style={{ display: 'block' }}>{a}</span>
-            <span style={{ display: 'block', textAlign: isMobile ? 'left' : 'right', color: B.mustard, fontStyle: 'italic', fontWeight: 600 }}>{b}</span>
-          </h1>
+            <h1 style={{
+              fontFamily: B.font, fontWeight: 700,
+              fontSize: 'clamp(40px, 13vw, 68px)',
+              letterSpacing: '-0.05em', lineHeight: 0.92,
+              color: B.navy, margin: 0,
+              maxWidth: 'none',
+              textAlign: 'center',
+            }}>
+              <span style={{ display: 'block' }}>{a}</span>
+              <span style={{ display: 'block', marginTop: 4, color: B.mustard, fontStyle: 'italic', fontWeight: 600 }}>{b}</span>
+            </h1>
 
-          {/* floating card — desktop only */}
-          {!isMobile && (
             <div style={{
-              marginTop: 36, width: 340,
+              width: '100%',
+              marginTop: 22,
               background: B.white, borderRadius: B.rLg,
-              padding: '22px 24px 24px',
+              padding: '20px 22px 22px',
               display: 'flex', flexDirection: 'column', gap: 14,
-              transform: 'rotate(-1.5deg)',
+              transform: 'none',
               boxShadow: '0 24px 50px -20px rgba(10,31,77,0.22), 0 4px 12px -6px rgba(10,31,77,0.1)',
               border: '1px solid rgba(10,31,77,0.06)',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: B.font, fontSize: 10, fontWeight: 600, color: B.ash, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: B.font, color: B.ash, ...TYPE.labelXs }}>
                 <span>{lang === 'es' ? 'Sobre nosotros' : 'About us'}</span>
                 <NumBadge n={1} tone="mustard" size={26} />
               </div>
-              <p style={{ fontFamily: B.font, fontSize: 13.5, lineHeight: 1.55, color: B.ink, margin: 0 }}>
+              <p style={{ fontFamily: B.font, color: B.ink, margin: 0, textAlign: 'left', ...TYPE.bodyXs }}>
                 {lang === 'es'
                   ? 'Firma de consultoría en riesgos y aseguramiento. Acompañamos a personas y empresas en proteger lo que más valoran.'
                   : 'A risk consulting and insurance brokerage. We support individuals and businesses in protecting what they value most.'}
               </p>
               <Btn variant="navy" size="md">{lang === 'es' ? 'Conócenos' : 'Get to know us'} →</Btn>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.15fr) minmax(320px, 0.85fr)',
+            gap: 48,
+            alignItems: 'center',
+            paddingTop: 44,
+            paddingBottom: 46,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h1 style={{
+                fontFamily: B.font, fontWeight: 700,
+                fontSize: 'clamp(44px, 7vw, 118px)',
+                letterSpacing: '-0.05em', lineHeight: 0.92,
+                color: B.navy, margin: 0,
+                maxWidth: 760,
+                textAlign: 'left',
+              }}>
+                <span style={{ display: 'block' }}>{a}</span>
+                <span style={{ display: 'block', marginTop: 8, color: B.mustard, fontStyle: 'italic', fontWeight: 600 }}>{b}</span>
+              </h1>
+            </div>
+
+            <div style={{
+              width: '100%',
+              background: B.white, borderRadius: B.rLg,
+              padding: '20px 22px 22px',
+              display: 'flex', flexDirection: 'column', gap: 14,
+              transform: 'none',
+              boxShadow: '0 24px 50px -20px rgba(10,31,77,0.22), 0 4px 12px -6px rgba(10,31,77,0.1)',
+              border: '1px solid rgba(10,31,77,0.06)',
+              justifySelf: 'end',
+              alignSelf: 'center',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: B.font, color: B.ash, ...TYPE.labelXs }}>
+                <span>{lang === 'es' ? 'Sobre nosotros' : 'About us'}</span>
+                <NumBadge n={1} tone="mustard" size={26} />
+              </div>
+              <p style={{ fontFamily: B.font, color: B.ink, margin: 0, textAlign: 'left', ...TYPE.bodyXs }}>
+                {lang === 'es'
+                  ? 'Firma de consultoría en riesgos y aseguramiento. Acompañamos a personas y empresas en proteger lo que más valoran.'
+                  : 'A risk consulting and insurance brokerage. We support individuals and businesses in protecting what they value most.'}
+              </p>
+              <Btn variant="navy" size="md">{lang === 'es' ? 'Conócenos' : 'Get to know us'} →</Btn>
+            </div>
+          </div>
+        )}
 
         {/* body + stats */}
         {isMobile ? (
           <div style={{ paddingBottom: 48 }}>
-            <p style={{ fontFamily: B.font, fontSize: 15, lineHeight: 1.6, color: B.ash, margin: '0 0 32px' }}>
+            <p style={{ fontFamily: B.font, color: B.ash, margin: '0 0 32px', textAlign: 'center', ...TYPE.bodyMd }}>
               {t(DATA.hero.body, lang)}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, borderTop: '1px solid rgba(10,31,77,0.10)', paddingTop: 28 }}>
@@ -483,9 +578,9 @@ function Hero({ lang }) {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', borderTop: '1px solid rgba(10,31,77,0.10)', paddingTop: 28, paddingBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) repeat(3, minmax(0, 1fr))', gap: 0, borderTop: '1px solid rgba(10,31,77,0.10)', paddingTop: 28, paddingBottom: 48, width: '100%', alignItems: 'start' }}>
             <div style={{ paddingRight: 28 }}>
-              <p style={{ fontFamily: B.font, fontSize: 15, lineHeight: 1.6, color: B.ash, margin: 0 }}>
+              <p style={{ fontFamily: B.font, color: B.ash, margin: 0, textAlign: 'center', maxWidth: 560, marginLeft: 'auto', marginRight: 'auto', ...TYPE.bodyMd }}>
                 {t(DATA.hero.body, lang)}
               </p>
             </div>
@@ -503,7 +598,7 @@ function Hero({ lang }) {
         )}
       </Wrap>
 
-      <Marquee items={DATA.clients.map(c => t(c, lang))} speed={50} />
+      <Marquee items={DATA.clients.map(c => t(c, lang))} speed={50} ariaLabel={lang === 'es' ? 'Clientes' : 'Clients'} />
     </section>
   );
 }
@@ -521,10 +616,10 @@ function About({ lang }) {
   return (
     <section id="about" style={{ background: B.cream, padding: isMobile ? '80px 0' : '120px 0' }}>
       <Wrap>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? 32 : 56, alignItems: 'end', marginBottom: 64 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? SP.xl : SP.xxxl, alignItems: 'end', marginBottom: 64 }}>
           <Reveal>
             <div>
-              <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+              <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelMd }}>
                 — {lang === 'es' ? 'Quiénes somos' : 'Who we are'}
               </p>
               <h2 style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 36 : 50, lineHeight: 1.04, letterSpacing: '-0.035em', color: B.ink, margin: 0 }}>
@@ -533,7 +628,7 @@ function About({ lang }) {
             </div>
           </Reveal>
           <Reveal delay={150}>
-            <p style={{ fontFamily: B.font, fontSize: 16, lineHeight: 1.65, color: B.ash, margin: 0, maxWidth: 520 }}>
+            <p style={{ fontFamily: B.font, color: B.ash, margin: 0, maxWidth: 520, textAlign: 'left', ...TYPE.bodyLg }}>
               {t(DATA.about.body, lang)}
             </p>
           </Reveal>
@@ -574,7 +669,7 @@ function AboutCard({ card, i, lang }) {
       <div style={{ fontFamily: B.font, fontWeight: 700, fontSize: 21, letterSpacing: '-0.02em' }}>
         {lang === 'es' ? card.titleEs : card.titleEn}
       </div>
-      <p style={{ fontFamily: B.font, fontSize: 14, lineHeight: 1.55, color: B.whiteSoft, margin: 0 }}>
+      <p style={{ fontFamily: B.font, color: B.whiteSoft, margin: 0, textAlign: 'left', ...TYPE.bodySm }}>
         {lang === 'es' ? card.descEs : card.descEn}
       </p>
       <div style={{ width: 32, height: 3, background: B.mustard, borderRadius: 999, marginTop: 'auto' }} />
@@ -624,7 +719,7 @@ function Split({ lang, chapter, eyebrow, title, rows, photoLabel, photoLabel2, p
           <Reveal from={photoSide === 'left' ? 'right' : 'left'} delay={180} style={{ order: isMobile ? 2 : (photoSide === 'left' ? 2 : 1) }}>
           <div>
             {!isMobile && (
-              <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+              <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelMd }}>
                 — {t(eyebrow, lang)}
               </p>
             )}
@@ -637,7 +732,7 @@ function Split({ lang, chapter, eyebrow, title, rows, photoLabel, photoLabel2, p
                   <NumBadge n={i + 1} tone={i % 2 === 0 ? 'navy' : 'mustard'} size={isMobile ? 40 : 52} />
                   <div style={{ paddingTop: 4 }}>
                     <div style={{ fontFamily: B.font, fontWeight: 600, fontSize: isMobile ? 16 : 18, letterSpacing: '-0.015em', color: fg, marginBottom: 6 }}>{t(r.t, lang)}</div>
-                    <div style={{ fontFamily: B.font, fontSize: 14, lineHeight: 1.55, color: sub }}>{t(r.d, lang)}</div>
+                    <div style={{ fontFamily: B.font, color: sub, textAlign: 'left', ...TYPE.bodySm }}>{t(r.d, lang)}</div>
                   </div>
                 </div>
               ))}
@@ -681,10 +776,10 @@ function Mission({ lang }) {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr', gap: isMobile ? 40 : 72, alignItems: 'start' }}>
           <Reveal>
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 24px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 24px', ...TYPE.labelMd }}>
               — {lang === 'es' ? 'Nuestra misión' : 'Our mission'}
             </p>
-            <div style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 26 : 'clamp(30px, 3.2vw, 50px)', lineHeight: 1.2, letterSpacing: '-0.03em', color: B.white }}>
+            <div style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 26 : 'clamp(30px, 3.2vw, 50px)', lineHeight: 1.2, letterSpacing: '-0.03em', color: B.white, textAlign: 'left' }}>
               <span style={{ color: B.mustard, opacity: 0.4 }}>"</span>
               {t(DATA.mission.body, lang)}
               <span style={{ color: B.mustard, opacity: 0.4 }}>"</span>
@@ -701,7 +796,7 @@ function Mission({ lang }) {
                   </div>
                   <div style={{ fontFamily: B.font, fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>{t(block.label, lang)}</div>
                 </div>
-                <p style={{ fontFamily: B.font, fontSize: 14, lineHeight: 1.6, color: i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.78)', margin: 0 }}>
+                <p style={{ fontFamily: B.font, color: i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.78)', margin: 0, textAlign: 'left', ...TYPE.bodySm }}>
                   {t(block.body, lang)}
                 </p>
               </div>
@@ -723,14 +818,14 @@ function Values({ lang }) {
       <Wrap>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 28 : 72, alignItems: 'end', marginBottom: 48 }}>
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelMd }}>
               — {lang === 'es' ? 'Principios & valores' : 'Principles & values'}
             </p>
             <h2 style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 34 : 50, lineHeight: 1.02, letterSpacing: '-0.035em', color: B.ink, margin: 0 }}>
               {lang === 'es' ? <>Ocho compromisos que <span style={{ color: B.mustard }}>guían</span> cada decisión.</> : <>Eight commitments that <span style={{ color: B.mustard }}>shape</span> every decision.</>}
             </h2>
           </div>
-          <p style={{ fontFamily: B.font, fontSize: 16, lineHeight: 1.65, color: B.ash, margin: 0, maxWidth: 480 }}>
+          <p style={{ fontFamily: B.font, color: B.ash, margin: 0, maxWidth: 480, textAlign: 'left', ...TYPE.bodyLg }}>
             {lang === 'es' ? 'No son palabras decorativas. Son criterios que aplicamos antes de aceptar un cliente, antes de recomendar una póliza y durante cada siniestro.' : 'These are not decorative words. They are criteria we apply before accepting a client, recommending a policy, and during every claim.'}
           </p>
         </div>
@@ -757,7 +852,7 @@ function ValueCard({ v, i, lang }) {
       }}>
       <NumBadge n={i + 1} tone={i % 2 === 0 ? 'navy' : 'mustard'} size={isMobile ? 36 : 42} />
       <div style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 14 : 17, letterSpacing: '-0.02em', color: B.ink, lineHeight: 1.2 }}>{t(v.t, lang)}</div>
-      {!isMobile && <p style={{ fontFamily: B.font, fontSize: 13, lineHeight: 1.55, color: B.ash, margin: 0 }}>{t(v.d, lang)}</p>}
+      {!isMobile && <p style={{ fontFamily: B.font, color: B.ash, margin: 0, textAlign: 'left', ...TYPE.bodyXs }}>{t(v.d, lang)}</p>}
       <div style={{ marginTop: 'auto', height: 3, width: 26, background: i % 2 === 0 ? B.navy : B.mustard, borderRadius: 999 }} />
     </div>
   );
@@ -782,7 +877,7 @@ function Clients({ lang }) {
         ]}
       />
       <div style={{ background: B.navyDeep }}>
-        <Marquee items={DATA.clients.map(c => t(c, lang))} speed={42} inverted />
+        <Marquee items={DATA.clients.map(c => t(c, lang))} speed={42} inverted ariaLabel={lang === 'es' ? 'Clientes' : 'Clients'} />
       </div>
     </>
   );
@@ -838,7 +933,7 @@ function PartnerCard({ name, index }) {
           <circle cx="100" cy="100" r="42" /><circle cx="100" cy="100" r="72" /><circle cx="100" cy="100" r="98" />
           <circle cx="160" cy="55" r="4" fill={B.mustard} stroke="none" />
         </svg>
-        <div style={{ fontFamily: B.font, fontWeight: 600, fontSize: 10, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', transform: 'translateZ(40px)' }}>
+        <div style={{ fontFamily: B.font, color: B.mustard, transform: 'translateZ(40px)', ...TYPE.labelXsWide }}>
           0{index + 1} · Aseguradora
         </div>
         <div style={{ transform: 'translateZ(50px)' }}>
@@ -864,21 +959,21 @@ function Partners({ lang }) {
       <Wrap>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 28 : 72, alignItems: 'end', marginBottom: 48 }}>
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelMd }}>
               — {lang === 'es' ? 'Aliados estratégicos' : 'Strategic partners'}
             </p>
             <h2 style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 34 : 46, lineHeight: 1.04, letterSpacing: '-0.035em', color: B.ink, margin: 0 }}>
               {t(DATA.partners.title, lang)}
             </h2>
           </div>
-          <p style={{ fontFamily: B.font, fontSize: 16, lineHeight: 1.65, color: B.ash, margin: 0, maxWidth: 480 }}>
+          <p style={{ fontFamily: B.font, color: B.ash, margin: 0, maxWidth: 480, textAlign: 'left', ...TYPE.bodyLg }}>
             {t(DATA.partners.body, lang)}
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 12 : 18 }}>
           {DATA.partners.items.map((p, i) => <PartnerCard key={p} name={p} index={i} />)}
         </div>
-        <div style={{ marginTop: 28, paddingTop: 18, borderTop: '1px solid rgba(10,31,77,0.10)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: 8, fontFamily: B.font, fontWeight: 600, fontSize: 11, color: B.ash, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        <div style={{ marginTop: 28, paddingTop: 18, borderTop: '1px solid rgba(10,31,77,0.10)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: 8, fontFamily: B.font, color: B.ash, ...TYPE.labelSm }}>
           <span>+ {lang === 'es' ? '12 aseguradoras adicionales en alianza' : '12 additional partner insurers'}</span>
           {!isMobile && <span style={{ color: B.mustard }}>{lang === 'es' ? 'Pasa el cursor →' : 'Hover any card →'}</span>}
         </div>
@@ -893,30 +988,63 @@ function Contact({ lang }) {
   const { isMobile } = useResponsive();
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', clientType: 'P', message: '' });
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const [errors, setErrors] = useState({});
+
+  const validate = (nextForm) => {
+    const nextErrors = {};
+    if (!nextForm.name.trim()) nextErrors.name = lang === 'es' ? 'El nombre es obligatorio.' : 'Name is required.';
+    if (!nextForm.email.trim()) {
+      nextErrors.email = lang === 'es' ? 'El correo es obligatorio.' : 'Email is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextForm.email)) {
+      nextErrors.email = lang === 'es' ? 'Ingresa un correo válido.' : 'Enter a valid email.';
+    }
+    if (nextForm.phone && !/^[\d+().\-\s]{7,}$/.test(nextForm.phone)) {
+      nextErrors.phone = lang === 'es' ? 'Ingresa un teléfono válido.' : 'Enter a valid phone number.';
+    }
+    return nextErrors;
+  };
+
+  const set = (k) => (e) => {
+    const value = e.target.value;
+    setForm(f => ({ ...f, [k]: value }));
+    setErrors(err => {
+      if (!err[k]) return err;
+      const next = { ...err };
+      delete next[k];
+      return next;
+    });
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
+    const nextErrors = validate(form);
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      setSent(false);
+      return;
+    }
+    setErrors({});
     setSent(true);
     setTimeout(() => setSent(false), 4000);
   };
 
-  const inp = { width: '100%', padding: '13px 16px', fontFamily: B.font, fontSize: 14, background: B.cream, border: '1.5px solid transparent', borderRadius: B.rMd, color: B.ink, outline: 'none', transition: 'border-color .15s', boxSizing: 'border-box' };
-  const lbl = { display: 'block', marginBottom: 7, fontFamily: B.font, fontWeight: 600, fontSize: 11, color: B.ash, letterSpacing: '0.12em', textTransform: 'uppercase' };
+  const inp = { width: '100%', padding: '14px 16px', minHeight: 44, fontFamily: B.font, background: B.cream, border: '1.5px solid transparent', borderRadius: B.rMd, color: B.ink, outline: 'none', transition: 'border-color .15s, background-color .15s', boxSizing: 'border-box', ...TYPE.bodySm };
+  const lbl = { display: 'block', marginBottom: 7, fontFamily: B.font, color: B.ash, ...TYPE.labelSm };
+  const err = { marginTop: 6, fontFamily: B.font, color: '#ef4444', ...TYPE.bodyXs };
 
   return (
     <section id="contact" style={{ background: B.navy, color: B.white, padding: isMobile ? '72px 0' : '110px 0' }}>
       <Wrap>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 48 : 56, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? SP.xxl : SP.xxxl, alignItems: 'start' }}>
           <Reveal from="left">
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 12, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelMd }}>
               — {lang === 'es' ? 'Hablemos' : "Let's talk"}
             </p>
             <h2 style={{ fontFamily: B.font, fontWeight: 700, fontSize: isMobile ? 30 : 46, lineHeight: 1.06, letterSpacing: '-0.035em', color: B.white, margin: 0 }}>
               {t(DATA.contact.title, lang)}
             </h2>
-            <p style={{ fontFamily: B.font, fontSize: 16, lineHeight: 1.65, color: B.whiteSoft, margin: '22px 0 36px', maxWidth: 440 }}>
+            <p style={{ fontFamily: B.font, color: B.whiteSoft, margin: '22px 0 36px', maxWidth: 440, textAlign: 'left', ...TYPE.bodyLg }}>
               {t(DATA.contact.body, lang)}
             </p>
             <div style={{ display: 'grid', gap: 12 }}>
@@ -924,8 +1052,8 @@ function Contact({ lang }) {
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: 16, alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
                   <NumBadge n={i + 1} tone={i % 2 === 0 ? 'mustard' : 'navy'} size={40} />
                   <div>
-                    <div style={{ fontFamily: B.font, fontWeight: 600, fontSize: 10, color: B.mustard, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t(c.label, lang)}</div>
-                    <div style={{ fontFamily: B.font, fontSize: 14, color: B.white, marginTop: 3, fontWeight: 500 }}>{typeof c.v === 'string' ? c.v : t(c.v, lang)}</div>
+                    <div style={{ fontFamily: B.font, color: B.mustard, ...TYPE.labelXs }}>{t(c.label, lang)}</div>
+                    <div style={{ fontFamily: B.font, color: B.white, marginTop: 3, fontWeight: 500, ...TYPE.bodySm }}>{typeof c.v === 'string' ? c.v : t(c.v, lang)}</div>
                   </div>
                 </div>
               ))}
@@ -934,26 +1062,66 @@ function Contact({ lang }) {
           </Reveal>
 
           <Reveal from="right" delay={150}>
-          <form onSubmit={onSubmit} style={{ background: B.white, borderRadius: B.rLg, padding: isMobile ? 24 : 36, color: B.ink, display: 'grid', gap: 20 }}>
+          <form onSubmit={onSubmit} noValidate style={{ background: B.white, borderRadius: B.rLg, padding: isMobile ? 24 : 36, color: B.ink, display: 'grid', gap: 20 }}>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
               <div>
-                <label style={lbl}>{lang === 'es' ? 'Nombre' : 'Name'}</label>
-                <input style={inp} value={form.name} onChange={set('name')} required onFocus={e => { e.target.style.borderColor = B.mustard; }} onBlur={e => { e.target.style.borderColor = 'transparent'; }} />
+                <label htmlFor="contact-name" style={lbl}>{lang === 'es' ? 'Nombre' : 'Name'}</label>
+                <input
+                  id="contact-name"
+                  style={{ ...inp, borderColor: errors.name ? '#ef4444' : 'transparent', background: errors.name ? '#fff1f2' : B.cream }}
+                  value={form.name}
+                  onChange={set('name')}
+                  required
+                  name="name"
+                  autoComplete="name"
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                />
+                {errors.name && <div id="name-error" role="alert" style={err}>{errors.name}</div>}
               </div>
               <div>
-                <label style={lbl}>{lang === 'es' ? 'Teléfono' : 'Phone'}</label>
-                <input style={inp} value={form.phone} onChange={set('phone')} onFocus={e => { e.target.style.borderColor = B.mustard; }} onBlur={e => { e.target.style.borderColor = 'transparent'; }} />
+                <label htmlFor="contact-phone" style={lbl}>{lang === 'es' ? 'Teléfono' : 'Phone'}</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  id="contact-phone"
+                  style={{ ...inp, borderColor: errors.phone ? '#ef4444' : 'transparent', background: errors.phone ? '#fff1f2' : B.cream }}
+                  value={form.phone}
+                  onChange={set('phone')}
+                  name="phone"
+                  autoComplete="tel"
+                  aria-invalid={!!errors.phone}
+                  aria-describedby={errors.phone ? 'phone-error' : undefined}
+                />
+                {errors.phone && <div id="phone-error" role="alert" style={err}>{errors.phone}</div>}
               </div>
             </div>
             <div>
-              <label style={lbl}>{lang === 'es' ? 'Correo electrónico' : 'Email'}</label>
-              <input type="email" style={inp} value={form.email} onChange={set('email')} required onFocus={e => { e.target.style.borderColor = B.mustard; }} onBlur={e => { e.target.style.borderColor = 'transparent'; }} />
+              <label htmlFor="contact-email" style={lbl}>{lang === 'es' ? 'Correo electrónico' : 'Email'}</label>
+              <input
+                type="email"
+                id="contact-email"
+                style={{ ...inp, borderColor: errors.email ? '#ef4444' : 'transparent', background: errors.email ? '#fff1f2' : B.cream }}
+                value={form.email}
+                onChange={set('email')}
+                required
+                name="email"
+                autoComplete="email"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+              />
+              {errors.email && <div id="email-error" role="alert" style={err}>{errors.email}</div>}
             </div>
             <div>
-              <label style={lbl}>{lang === 'es' ? 'Tipo de cliente' : 'Client type'}</label>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <label id="client-type-label" style={lbl}>{lang === 'es' ? 'Tipo de cliente' : 'Client type'}</label>
+              <div role="group" aria-labelledby="client-type-label" style={{ display: 'flex', gap: 10 }}>
                 {[{ v: 'P', es: 'Persona natural', en: 'Individual' }, { v: 'E', es: 'Empresa', en: 'Business' }].map(opt => (
-                  <button key={opt.v} type="button" onClick={() => setForm(f => ({ ...f, clientType: opt.v }))}
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, clientType: opt.v }))}
+                    aria-pressed={form.clientType === opt.v}
+                    aria-label={lang === 'es' ? `Tipo de cliente: ${opt.es}` : `Client type: ${opt.en}`}
                     style={{ flex: 1, padding: '12px 14px', borderRadius: B.rMd, border: form.clientType === opt.v ? `1.5px solid ${B.navy}` : '1.5px solid transparent', background: form.clientType === opt.v ? B.navy : B.cream, color: form.clientType === opt.v ? B.white : B.ink, fontFamily: B.font, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all .15s' }}>
                     {lang === 'es' ? opt.es : opt.en}
                   </button>
@@ -961,14 +1129,21 @@ function Contact({ lang }) {
               </div>
             </div>
             <div>
-              <label style={lbl}>{lang === 'es' ? '¿Qué quieres proteger?' : 'What do you want to protect?'}</label>
-              <textarea style={{ ...inp, minHeight: 100, resize: 'vertical' }} value={form.message} onChange={set('message')} onFocus={e => { e.target.style.borderColor = B.mustard; }} onBlur={e => { e.target.style.borderColor = 'transparent'; }} />
+              <label htmlFor="contact-message" style={lbl}>{lang === 'es' ? '¿Qué quieres proteger?' : 'What do you want to protect?'}</label>
+              <textarea
+                id="contact-message"
+                style={{ ...inp, minHeight: 120, resize: 'vertical' }}
+                value={form.message}
+                onChange={set('message')}
+                name="message"
+                autoComplete="off"
+              />
             </div>
             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: 12, marginTop: 2 }}>
-              <span style={{ fontFamily: B.font, fontSize: 11, fontWeight: 600, color: sent ? '#22c55e' : B.ash, letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'color .3s' }}>
+              <span role="status" aria-live="polite" style={{ fontFamily: B.font, color: sent ? '#22c55e' : B.ash, transition: 'color .3s', ...TYPE.labelSm }}>
                 {sent ? (lang === 'es' ? '✓ Recibido — te contactamos pronto.' : '✓ Received — we\'ll reach out shortly.') : (lang === 'es' ? 'Respuesta en 24h' : '24h response')}
               </span>
-              <Btn variant="mustard" style={isMobile ? { justifyContent: 'center' } : {}}>{lang === 'es' ? 'Solicitar diagnóstico' : 'Request diagnostic'} →</Btn>
+              <Btn type="submit" variant="mustard" style={isMobile ? { justifyContent: 'center' } : {}}>{lang === 'es' ? 'Solicitar diagnóstico' : 'Request diagnostic'} →</Btn>
             </div>
           </form>
           </Reveal>
@@ -988,24 +1163,24 @@ function Footer({ lang }) {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 1fr 1fr', gap: isMobile ? 36 : 52, paddingBottom: 36 }}>
           <div>
             <div style={{ background: B.white, borderRadius: B.rLg, padding: '7px 18px 7px 6px', display: 'inline-flex', alignItems: 'center', marginBottom: 18 }}>
-              <img src="/assets/logo-risk-consulting.png" alt="Risk Consulting Seguros" style={{ height: 40, width: 'auto' }} />
+              <img src="/assets/logo-risk-consulting.png" alt="Risk Consulting Seguros" loading="lazy" decoding="async" style={{ height: 40, width: 'auto' }} />
             </div>
-            <p style={{ fontFamily: B.font, fontSize: 13, lineHeight: 1.55, color: B.whiteSoft, margin: 0, maxWidth: 360 }}>
+            <p style={{ fontFamily: B.font, color: B.whiteSoft, margin: 0, maxWidth: 360, textAlign: 'left', ...TYPE.bodyXs }}>
               {t(DATA.footer.legal, lang)}
             </p>
           </div>
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 11, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelSmWide }}>
               {lang === 'es' ? 'Contacto' : 'Contact'}
             </p>
-            <div style={{ fontFamily: B.font, fontSize: 14, lineHeight: 1.85, color: B.whiteSoft }}>
+            <div style={{ fontFamily: B.font, color: B.whiteSoft, ...TYPE.bodySm, lineHeight: 1.75 }}>
               <div>contacto@riskconsultingvg.co</div>
               <div>+57 (601) 745 80 22</div>
               <div>Carrera 11 #82-71, Bogotá D.C.</div>
             </div>
           </div>
           <div>
-            <p style={{ fontFamily: B.font, fontWeight: 600, fontSize: 11, color: B.mustard, letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+            <p style={{ fontFamily: B.font, color: B.mustard, margin: '0 0 14px', ...TYPE.labelSmWide }}>
               {lang === 'es' ? 'Navegación' : 'Navigation'}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -1028,7 +1203,7 @@ function FooterLink({ href, children }) {
   const [hov, setHov] = useState(false);
   return (
     <a href={href} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ fontFamily: B.font, fontSize: 14, color: hov ? B.mustard : B.whiteSoft, transition: 'color .15s' }}>
+      style={{ fontFamily: B.font, color: hov ? B.mustard : B.whiteSoft, transition: 'color .15s', ...TYPE.bodySm }}>
       {children}
     </a>
   );
